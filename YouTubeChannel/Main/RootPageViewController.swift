@@ -7,9 +7,15 @@
 
 import UIKit
 
+protocol RootPageProtocol : AnyObject {
+    func currentPage(_ index : Int)
+}
+
 class RootPageViewController: UIPageViewController {
     
     var subViewControllers = [UIViewController]()
+    var currentIndex : Int = 0
+    weak var delegateRoot : RootPageProtocol?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,6 +33,8 @@ class RootPageViewController: UIPageViewController {
             AboutViewController(),
         ]
         
+        _ = subViewControllers.enumerated().map({$0.element.view.tag = $0.offset})
+        
         setViewControllerFromIndex(index: 0, direction: .forward)
     }
     
@@ -41,8 +49,7 @@ extension RootPageViewController : UIPageViewControllerDelegate, UIPageViewContr
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
-        let index : Int = subViewControllers.firstIndex(of: <#T##UIViewController#>) ?? 0
-        
+        let index : Int = subViewControllers.firstIndex(of: viewController) ?? 0
         if index <= 0 {
             return nil
         }
@@ -51,12 +58,20 @@ extension RootPageViewController : UIPageViewControllerDelegate, UIPageViewContr
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
-        let index : Int = subViewControllers.firstIndex(of: <#T##UIViewController#>) ?? 0
+        let index : Int = subViewControllers.firstIndex(of: viewController) ?? 0
         
         if index >= (subViewControllers.count-1) {
             return nil
         }
         
-        return subViewControllers[index-1]
+        return subViewControllers[index+1]
+    }
+    
+    func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+        print("finish->", finished)
+        if let index = pageViewController.viewControllers?.first?.view.tag{
+            currentIndex = index
+            delegateRoot?.currentPage(index)
+        }
     }
 }
